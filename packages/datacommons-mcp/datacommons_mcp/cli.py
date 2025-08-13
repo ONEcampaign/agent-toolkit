@@ -33,7 +33,7 @@ def http(host: str, port: int, reload: bool) -> None:
         click.echo(f"SSE endpoint: http://{host}:{port}/sse")
         click.echo("Press CTRL+C to stop")
 
-        mcp.run(host=host, port=port, transport="sse")
+        mcp.run(host=host, port=port, transport="streamable-http")
 
     except ImportError as e:
         click.echo(f"Error importing server: {e}", err=True)

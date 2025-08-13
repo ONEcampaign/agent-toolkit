@@ -15,7 +15,7 @@ classifiers = [
 ]
 
 dependencies = [
-  "datacommons-mcp",
+#  "datacommons-mcp",
   "ruff>=0.12.5",
 ]
 
