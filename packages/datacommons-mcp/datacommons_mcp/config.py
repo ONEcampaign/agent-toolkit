@@ -32,6 +32,6 @@ CUSTOM_DC_CONFIG = {
     "dc_type": "custom",
     "base_url": "https://staging-datacommons-web-service-650536812276.northamerica-northeast1.run.app",
     "root_topic_dcids": [
-        "ONE/topic/BasicHealth",
+        "ONE/topic/HealthFinancing",
     ],
 }
