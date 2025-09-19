@@ -35,10 +35,22 @@ class DCSettingsSelector(BaseSettings):
     )
 
 
-class BaseDCSettings(BaseSettings):
+class DCSettings(BaseSettings):
     """Settings for base Data Commons instance."""
 
     model_config = _MODEL_CONFIG
+
+    api_key: str = Field(alias="DC_API_KEY", description="API key for Data Commons")
+
+    use_search_indicators_endpoint: bool = Field(
+        default=True,
+        alias="DC_USE_SEARCH_INDICATORS_ENDPOINT",
+        description=("Toggles between search-indicators and search-vector endpoint."),
+    )
+
+
+class BaseDCSettings(DCSettings):
+    """Settings for base Data Commons instance."""
 
     def __init__(self, **kwargs: dict[str, Any]) -> None:
         super().__init__(**kwargs)
@@ -48,7 +60,6 @@ class BaseDCSettings(BaseSettings):
         alias="DC_TYPE",
         description="Type of Data Commons (must be 'base')",
     )
-    api_key: str = Field(alias="DC_API_KEY", description="API key for Data Commons")
     sv_search_base_url: str = Field(
         default="https://datacommons.org",
         alias="DC_SV_SEARCH_BASE_URL",
@@ -65,13 +76,19 @@ class BaseDCSettings(BaseSettings):
         description="Paths to topic cache files",
     )
 
-    @field_validator("topic_cache_paths", mode="before")
+    base_root_topic_dcids: list[str] | None = Field(
+        default=["dc/topic/Root", "dc/topic/sdg"],
+        alias="DC_BASE_ROOT_TOPIC_DCIDS",
+        description="List of root topic DCIDs for base DC",
+    )
+
+    @field_validator("topic_cache_paths", "base_root_topic_dcids", mode="before")
     @classmethod
     def parse_list_like_parameter(cls, v: str) -> list[str] | None:
         return _parse_list_like_parameter(v)
 
 
-class CustomDCSettings(BaseSettings):
+class CustomDCSettings(DCSettings):
     """Settings for custom Data Commons instance."""
 
     model_config = _MODEL_CONFIG
@@ -84,7 +101,6 @@ class CustomDCSettings(BaseSettings):
         alias="DC_TYPE",
         description="Type of Data Commons (must be 'custom')",
     )
-    api_key: str = Field(alias="DC_API_KEY", description="API key for Data Commons")
     custom_dc_url: str = Field(
         alias="CUSTOM_DC_URL", description="Base URL for custom Data Commons instance"
     )
@@ -113,6 +129,11 @@ class CustomDCSettings(BaseSettings):
         alias="DC_ROOT_TOPIC_DCIDS",
         description="List of root topic DCIDs",
     )
+    base_root_topic_dcids: list[str] | None = Field(
+        default=["dc/topic/Root", "dc/topic/sdg"],
+        alias="DC_BASE_ROOT_TOPIC_DCIDS",
+        description="List of root topic DCIDs for base DC",
+    )
     topic_cache_paths: list[str] | None = Field(
         default=None,
         alias="DC_TOPIC_CACHE_PATHS",
@@ -126,7 +147,11 @@ class CustomDCSettings(BaseSettings):
     )
 
     @field_validator(
-        "root_topic_dcids", "place_like_constraints", "topic_cache_paths", mode="before"
+        "root_topic_dcids",
+        "base_root_topic_dcids",
+        "place_like_constraints",
+        "topic_cache_paths",
+        mode="before",
     )
     @classmethod
     def parse_list_like_parameter(cls, v: str) -> list[str] | None:
@@ -141,13 +166,13 @@ class CustomDCSettings(BaseSettings):
 
 
 def _parse_list_like_parameter(v: Any) -> list[str] | None:  # noqa: ANN401
-    """Parse comma-separated string into list of strings."""
+    """Parse a comma-separated string or a list into a list of strings."""
+    if isinstance(v, list):
+        return [s for s in (str(item).strip() for item in v) if s]
     if not isinstance(v, str) or not v.strip():
         return None
-    # Split by comma and strip whitespace from each item
-    items = [item.strip() for item in v.split(",")]
-    # Filter out empty items
-    return [item for item in items if item]
+    # Split by comma and strip whitespace from each item, filtering out empty strings
+    return [s for s in (part.strip() for part in v.split(",")) if s]
 
 
 # Union type for both settings

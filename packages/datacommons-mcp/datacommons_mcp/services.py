@@ -496,6 +496,13 @@ async def search_indicators(
     # Validate parameters
     _validate_search_parameters(per_search_limit)
 
+    if not query.strip():
+        # Always include topics for such queries
+        include_topics = True
+        if not places:
+            # Default to World if no places are specified for such queries
+            places = ["World"]
+
     # Resolve place names to DCIDs
     place_dcids_map = await _resolve_places(client, places)
 
@@ -504,7 +511,8 @@ async def search_indicators(
         query, places, place_dcids_map, maybe_bilateral=maybe_bilateral
     )
 
-    search_result = await _search_indicators(
+    # Use search-vector or temp impl of search-indicators endpoint
+    search_result = await _search_vector(
         client=client,
         search_tasks=search_tasks,
         per_search_limit=per_search_limit,
@@ -649,7 +657,7 @@ def _collect_all_dcids(
     return all_dcids
 
 
-async def _search_indicators(
+async def _search_vector(
     client: DCClient,
     search_tasks: list[SearchTask],
     per_search_limit: int = 10,
@@ -661,6 +669,7 @@ async def _search_indicators(
     Returns:
         SearchResult: Typed result with topics and variables dictionaries
     """
+
     # Execute parallel searches
     tasks = []
     for search_task in search_tasks:
@@ -698,6 +707,8 @@ async def _merge_search_results(results: list[dict]) -> SearchResult:
     all_variables: dict[str, SearchVariable] = {}
 
     for result in results:
+        descriptions = result.get("descriptions", {})
+        alternate_descriptions = result.get("alternate_descriptions", {})
         # Union topics
         for topic in result.get("topics", []):
             topic_dcid = topic["dcid"]
@@ -707,6 +718,8 @@ async def _merge_search_results(results: list[dict]) -> SearchResult:
                     member_topics=topic.get("member_topics", []),
                     member_variables=topic.get("member_variables", []),
                     places_with_data=topic.get("places_with_data"),
+                    description=descriptions.get(topic_dcid),
+                    alternate_descriptions=alternate_descriptions.get(topic_dcid),
                 )
 
         # Union variables
@@ -716,6 +729,8 @@ async def _merge_search_results(results: list[dict]) -> SearchResult:
                 all_variables[var_dcid] = SearchVariable(
                     dcid=variable["dcid"],
                     places_with_data=variable.get("places_with_data", []),
+                    description=descriptions.get(var_dcid),
+                    alternate_descriptions=alternate_descriptions.get(var_dcid),
                 )
 
     return SearchResult(topics=all_topics, variables=all_variables)
