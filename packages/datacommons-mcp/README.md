@@ -1,97 +1,63 @@
 # Data Commons MCP Server
 
-This is an experimental MCP server for fetching public information from [Data Commons](https://datacommons.org/).
+This is a Model Context Protocol (MCP) server for fetching public statistical data from [Data Commons](https://datacommons.org) instances.
 
-**This is experimental and subject to change.**
+Data Commons is an open knowledge repository that provides a unified view across multiple public data sets and statistics.  This server allows any MCP-enabled agent or client to query the Data Commons knowledge graph.
 
-## Requirements
+## Features
+* **MCP-Compliant:** Implements the Model Context Protocol for seamless agent integration.
+* **Data Commons Access:** Fetches public statistics and data from the base datacommons.org knowledge graph.
+* **Custom Instance Support:** Can be configured to work with Custom Data Commons instances.
+* **Flexible Serving:** Runs over both streamable HTTP and stdio.
 
-1.  A Data Commons API key. You can get one from [apikeys.datacommons.org](https://apikeys.datacommons.org/).
-2.  `uv`. You can find installation instructions at [https://astral.sh/uv](https://astral.sh/uv).
+## Quickstart
 
-## Configuration
+### Prerequisites
 
-The server can be configured using environment variables. For local development, you can copy [`.env.sample`](.env.sample) to `.env` and edit the values.
-Note that the `.env` file should be in your current working directory:
+1.  You must have a Data Commons API key; create one at [apikeys.datacommons.org](https://apikeys.datacommons.org/).
+2.  Install `uv` by following the [official installation instructions](https://docs.astral.sh/uv/getting-started/installation).
 
-```bash
-cp .env.sample .env
-# Edit .env with your configuration
+### Configuration
+
+Set the following required environment variable in your shell:
+
+```
+export DC_API_KEY=<your API key>
 ```
 
-The `.env.sample` file contains all available configuration options with detailed documentation. Only `DC_API_KEY` is required; `DC_TYPE` defaults to "base" if not specified.
+### Start the server 
 
-## Getting Started
+Run the server from your command line in one of two modes:
 
-Run the server with `uvx`. You can set the API key via environment variable or use a `.env` file:
+**Streamable HTTP**
+
+This runs the server with Streamable HTTP.
+
+```bash
+# Runs on default port 8080
+uvx datacommons-mcp serve http [--port <PORT>]
+```
+
+The server will be available at `http://localhost:<port>/mcp`.
 
 **stdio**
 
-```bash
-# Using environment variable
-DC_API_KEY=<your-key> uvx datacommons-mcp serve stdio
+This transport mode is intended for local integrations and is programmatically configured within a client (like Gemini CLI settings) to communicate over `stdio`.
 
-# Or using .env file (copy .env.sample to .env first)
+```bash
 uvx datacommons-mcp serve stdio
 ```
 
-**Streamable http**
+## Clients
 
-This will run the server with Streamable HTTP on port 8080. You can access it at `http://localhost:8080/mcp`.
+You can use any MCP-enabled agent or client to connect to your running server. For example, see the [Data Commons MCP documentation](https://github.com/datacommonsorg/agent-toolkit/blob/main/docs/user_guide.md) for guides on connecting:
+* [Google Gemini CLI](https://github.com/datacommonsorg/agent-toolkit/blob/main/docs/quickstart.md)
+* [Google ADK natively](https://github.com/datacommonsorg/agent-toolkit/blob/main/docs/user_guide.md#use-the-sample-agent)
+* [Google ADK in Colab](https://colab.research.google.com/github/datacommonsorg/agent-toolkit/blob/main/notebooks/datacommons_mcp_tools_with_custom_agent.ipynb)
 
-```bash
-# Using environment variable
-DC_API_KEY=<your-key> uvx datacommons-mcp serve http
+Or see your preferred client's documentation for how to configure it, using the commands listed above.
 
-# Or using .env file
-uvx datacommons-mcp serve http
-```
+## Advanced Configuration
+### Using MCP Tools with a Custom Data Commons
 
-**Debugging**
-
-You can start the MCP inspector on port 6277. Look at the output for the pre-filled proxy auth token URL.
-
-```bash
-# Using environment variable
-DC_API_KEY=<your-key> npx @modelcontextprotocol/inspector uvx datacommons-mcp serve stdio
-
-# Or using .env file
-npx @modelcontextprotocol/inspector uvx datacommons-mcp serve stdio
-```
-
-> IMPORTANT: Open the inspector via the **pre-filled session token url** which is printed to terminal on server startup.
-> * It should look like `http://localhost:6274/?MCP_PROXY_AUTH_TOKEN={session_token}`
-
-Then to connect to this MCP server, enter the following values in the inspector UI:
-
-- Transport Type: `STDIO`
-- Command: `uvx`
-- Arguments: `datacommons-mcp serve stdio`
-
-Click `Connect`
-
-## Testing with Gemini CLI
-
-You can use this MCP server with the [Gemini CLI](https://github.com/google-gemini/gemini-cli).
-
-Edit your `~/.gemini/settings.json` file and add the following, replacing `<your api key>` with your actual API key:
-
-```json
-{
-  ...
-  "mcpServers": {
-    "datacommons-mcp": {
-      "command": "uvx",
-      "args": [
-        "datacommons-mcp",
-        "serve",
-        "stdio"
-      ],
-      "env": {
-        "DC_API_KEY": "<your api key>"
-      },
-      "trust": true
-    }
-  }
-}
-```
+Follow the [Guide for using MCP Tools with Custom Data Commons](https://github.com/datacommonsorg/agent-toolkit/blob/main/docs/user_guide.md#custom-data-commons) to set additional environment variables required for custom configuration.
