@@ -534,18 +534,7 @@ async def search_indicators(
 
     ### Special Query Scenarios
 
-    **Scenario 1: Vague, Unqualified Queries ("what data do you have?")**
-      - **Action:** If a user asks a general question about available data, proactively call the tool for "World" to provide an initial overview.
-
-      - **Call:** `query=""`, `places=["World"]`, `include_topics=True`
-
-      - **Result:** This returns the top-level topics for the World.
-
-      - **Agent Follow-up:** After showing the World data, consider asking if the user would like to see data for a different, more specific place if it seems helpful for the conversation.
-
-      - **Example agent response:** "Here is a general overview of the data topics available for the World. You can also ask for this information for a specific place, like 'Africa', 'India', 'California', or 'Paris'."
-
-    **Scenario 2: Ambiguous Place Names**
+    **Scenario 1: Ambiguous Place Names**
 
       - **Problem:** User asks for "Scotland", tool returns "Scotland County, USA".
 
